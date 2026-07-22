@@ -1,12 +1,11 @@
-# ⬡ OWN.LAB / Hexel
+# ⬡ OWN.LAB / Hexel ONE / HEX.MC
 
 > **Reimagining desk displays through geometry, soft lighting, and open hardware.**
 
-![Hexel Banner](https://via.placeholder.com/1200x400/18181b/ffffff?text=HEXEL+by+OWN.LAB+|+Coming+Soon)
 
 ---
 
-### 💡 What is Hexel?
+### What is Hexel?
 
 **Hexel** is a custom desktop hardware display that breaks away from conventional rectangular grid matrices. Built around a unique **hexagonal (honeycomb) pixel layout** enclosed in a 3d printed case, it delivers a distinct high-tech aesthetic and smooth light diffusion.
 
@@ -14,7 +13,7 @@ Powered by a modular Python ecosystem (**HEX.MC**), Hexel transitions seamlessly
 
 ---
 
-### ✨ Key Highlights
+### Key Highlights
 
 * **Hexagonal Matrix Geometry:** Custom rotated pixel layout creating a non-mainstream visual experience.
 * **Ambient & Functional Lighting:** Engineered optical diffusion for crisp, glare-free status display and backlight accents.
