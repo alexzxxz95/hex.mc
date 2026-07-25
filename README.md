@@ -1,47 +1,183 @@
 # ⬡ OWN.LAB / Hexel ONE / HEX.MC
 
-> **Reimagining desk displays through geometry, soft lighting, and open hardware.**
+# HEX_MC
 
+Десктопний застосунок керування гексагональною NeoPixel-матрицею (77 світлодіодів, "Hexel") через ESP32-C3 по USB-serial.
 
----
+Написано на Python (CustomTkinter). Архітектура — плагінова: ядро (`core/`) нічого не знає про конкретні режими відображення, кожен режим — окремий модуль у `modules/`, який підключається сам.
 
-### What is Hexel?
-
-**Hexel** is a custom desktop hardware display that breaks away from conventional rectangular grid matrices. Built around a unique **hexagonal (honeycomb) pixel layout** enclosed in a 3d printed case, it delivers a distinct high-tech aesthetic and smooth light diffusion.
-
-Powered by a modular Python ecosystem (**HEX.MC**), Hexel transitions seamlessly from a minimal desk clock to a fully interactive control hub.
-
----
-
-### Key Highlights
-
-* **Hexagonal Matrix Geometry:** Custom rotated pixel layout creating a non-mainstream visual experience.
-* **Ambient & Functional Lighting:** Engineered optical diffusion for crisp, glare-free status display and backlight accents.
-* **Open & Modular Software (HEX.MC):** Python-driven platform with local control, custom applets, and API integrations.
-* **Tactile & Interactive:** Native hardware integration for rotary controls, touch sensors, and PC synchronization.
+![status](https://img.shields.io/badge/status-active-brightgreen)
+![python](https://img.shields.io/badge/python-3.10%2B-blue)
+![license](https://img.shields.io/badge/license-GPLv3-orange)
 
 ---
 
-### Project Status
+## Зміст
 
-`Status: Active Development / Prototype Phase`
-
-The project is currently undergoing refine-and-build stages, focusing on:
-- [x] Matrix geometry proof of concept & custom typography (3x5 hex font)
-- [x] Initial hardware platform & ESP32 firmware
-- [x] Core desktop management client (**HEX.MC**)
-- [ ] Final enclosure architecture & PCB layout
-- [ ] Public developer API & Plugin documentation
-
----
-
-### Community & Open Hardware Vision
-
-We believe in user ownership and community-driven development. **Hexel** is designed to be easily extensible — allowing developers to write custom scripts, design applets (Pomodoro timers, stats, weather, notifications), and interface with local setups.
-> Full source code, hardware specs, and assembly guides will be published upon the official release.
+- [Можливості](#можливості)
+- [Скріншоти](#скріншоти)
+- [Встановлення](#встановлення)
+- [Швидкий старт](#швидкий-старт)
+- [Архітектура](#архітектура)
+- [Формат кадру та серійний протокол](#формат-кадру-та-серійний-протокол)
+- [Структура репозиторію](#структура-репозиторію)
+- [Розширення застосунку](#розширення-застосунку)
+- [Конфігурація](#конфігурація)
+- [Відомі обмеження](#відомі-обмеження)
+- [Ліцензія](#ліцензія)
 
 ---
 
-<p center>
-  Designed & built by <b>Artem Honcharov (Hon4)</b> | <b>OWN.LAB</b>
-</p>
+## Можливості
+
+- Автовиявлення ESP32 по USB VID + handshake-підтвердження (без ручного вибору порту).
+- П'ять вбудованих режимів відображення:
+  - **CLOCK** — годинник піксельним шрифтом 3×5 з окремим кольором для годин/крапки/хвилин.
+  - **SOFTBOX** — суцільна заливка матриці (яскравість / температура / відтінок) — як м'яке джерело світла для фото/відео.
+  - **SCREEN** — трансляція довільної ділянки екрана (захоплення через `mss`) з корекцією GAIN/CONTRAST/SATURATION, блокуванням співвідношення сторін і 6 слотами пресетів.
+  - **GIF** — програвання GIF-файлів із бібліотеки (папка) з регулюванням яскравості й швидкості.
+  - **SCRIPTS** — динамічне завантаження стороннього `.py`-коду користувача (плагіни другого рівня — див. [SCRIPTS_DEV_GUIDE.md](SCRIPTS_DEV_GUIDE.md)).
+- Live-прев'ю матриці у вікні застосунку (з ефектом світіння/скан-ліній, вимикається в LOW_PERF_MODE).
+- Зворотна телеметрія з пристрою (температура, освітленість, акселерометр, події кнопки).
+- Перебивання активного режиму короткочасними сповіщеннями (`interrupt_display`) — напр. системні нотифікації поверх поточного режиму без перемикання меню.
+- Світла/темна тема, згортання в системний трей, автозбереження стану.
+- Плагінова архітектура на двох рівнях:
+  - **Модулі** (`modules/*.py`) — повноцінні режими з власною панеллю керування. Див. [MODULES_DEV_GUIDE.md](MODULES_DEV_GUIDE.md).
+  - **Скрипти** (динамічний `.py`, що вантажиться всередині режиму SCRIPTS) — легший спосіб додати свою анімацію без написання цілого модуля. Див. [SCRIPTS_DEV_GUIDE.md](SCRIPTS_DEV_GUIDE.md).
+
+## Скріншоти
+
+_(додайте сюди 2–3 скріншоти інтерфейсу: головне вікно, SCREEN-режим, SETTINGS)_
+
+## Встановлення
+
+Потрібен Python 3.10+.
+
+```bash
+git clone https://github.com/<your-org>/hex_mc.git
+cd hex_mc
+pip install -r requirements.txt
+```
+
+Мінімальний набір залежностей (`requirements.txt`):
+
+```
+customtkinter
+numpy
+opencv-python
+pillow
+pyserial
+mss
+pystray
+```
+
+> `pystray` — опційна залежність. Якщо вона недоступна на платформі (напр. Linux без AppIndicator), застосунок працює далі, просто без іконки в треї (пишеться відповідний запис у системний лог).
+
+## Швидкий старт
+
+```bash
+python main.pyw
+```
+
+1. Прошийте ESP32-C3 фірмвером Hexel (окремий репозиторій прошивки).
+2. Підключіть плату по USB.
+3. У застосунку відкрийте **⚙️ CONNECTION** → **АВТОВИЗНАЧЕННЯ** (або оберіть порт вручну зі списку) → **ПІДКЛЮЧИТИ**.
+4. Оберіть режим у боковому меню.
+
+Автопідключення при старті вмикається чекбоксом у панелі CONNECTION.
+
+## Архітектура
+
+```
+main.pyw                 # точка входу — піднімає MatrixApp
+core/
+  app.py                 # MatrixApp — вікно, бокова панель, прев'ю, serial, лог, трей
+  config.py               # CONF (живий словник), THEMES, шляхи, завантаження/збереження
+  plugin_base.py          # HexModuleBase, ModuleContext, register_module, discover_modules
+  serial_manager.py       # SerialManager — робота з COM-портом, автовиявлення, handshake
+  preview_renderer.py      # рендер grid → PIL Image для прев'ю-канваса
+  theme.py                # GlowLabel — текст з ефектом світіння
+  widgets.py              # make_slider, FileLibraryPanel — спільні UI-блоки для модулів
+modules/
+  clock.py, softbox.py, screen.py, gif_player.py, scripts.py   # вбудовані режими
+```
+
+Ядро (`core/app.py`) сканує `modules/` через `discover_modules()` і будує меню з зареєстрованих модулів — жодного хардкоду конкретних режимів у ядрі немає. **Додати новий режим = покласти новий файл у `modules/`.** Файл `core/app.py` при цьому не редагується.
+
+### Життєвий цикл модуля
+
+1. При старті ядро один раз викликає `on_engine_ready(ctx)` для кожного увімкненого модуля (для фонових потоків, що мають жити незалежно від вибору в меню).
+2. При виборі режиму в меню — `build_ui(parent, ctx)` (лише один раз, панель кешується) → `on_activate(ctx)`.
+3. Поки режим активний:
+   - **pull-модуль** (`owns_thread = False`) — ядро само щокадру (~30 fps) викликає `render(grid, ctx)` у своєму єдиному відеопотоці;
+   - **push-модуль** (`owns_thread = True`) — сам керує джерелом кадрів у власному потоці (запущеному в `on_activate`) і штовхає готові кадри через `ctx.request_redraw(grid)`, коли вважає за потрібне; `render()` ядро для нього не викликає.
+4. При виході з режиму — `on_deactivate(ctx)`.
+5. Стан модуля (`get_state()`/`set_state()`) автозберігається в `CONF["modules"][<key>]` з дебаунсом 600 мс.
+
+Детальний контракт — у [MODULES_DEV_GUIDE.md](MODULES_DEV_GUIDE.md).
+
+## Формат кадру та серійний протокол
+
+- Внутрішнє представлення кадру — `numpy.ndarray` розміром **5×16×3, dtype=uint8, порядок каналів BGR** (як у OpenCV).
+- Фізична матриця — 5 рядків: **15, 16, 15, 16, 15** гексагонів (77 світлодіодів сумарно). У непарних (16-довгих) рядках використовуються всі 16 стовпців grid; у парних (15-довгих) — стовпці 1..15 (стовпець 0 — "мертвий", не мапиться на реальний піксель).
+- Транспорт — USB CDC serial, **921600 бод**.
+- Автовиявлення: фільтр портів за VID Espressif (`0x303A`) → на кожному кандидаті відкривається порт, чекається 1.6 с (час на reset ESP32), надсилається байт `P`, очікується відповідь `K` протягом 0.3 с.
+- Кадр на пристрій: байт `b'S'` + по 3 байти (R, G, B) на кожен із 77 пікселів, рядок за рядком; у непарних рядках порядок пікселів у рядку **реверсується** (відповідає фізичному "зміїному" підключенню світлодіодів на платі). Відправка обмежена ~30 fps (`FPS_LIMIT = 0.0333 с`).
+- Зворотний канал (телеметрія від пристрою) читається окремим потоком рядково (`\n`-роздільник), формат `SENSOR:key=val,key=val,...` та `BTN:<подія>`.
+
+## Структура репозиторію
+
+```
+hex_mc/
+├── main.pyw
+├── core/
+├── modules/
+├── requirements.txt
+├── README.md
+├── MODULES_DEV_GUIDE.md
+├── SCRIPTS_DEV_GUIDE.md
+├── LICENSE
+├── hexmc_config.json      # генерується при першому запуску, у .gitignore
+└── hexmc_error.log         # генерується при помилках старту, у .gitignore
+```
+
+## Розширення застосунку
+
+Є два рівні розширюваності — оберіть залежно від задачі:
+
+.___________________._____________________________________.________________________________________.
+|-------------------|**Модуль** (`modules/*.py`)----------|-**Скрипт** (SCRIPTS-режим)-------------|
+|___________________|_____________________________________|________________________________________|
+| Що це ------------| Повноцінний режим у бічному меню, --| Один `.py`-файл, що завантажується ----|
+|-------------------| зі своєю панеллю налаштувань -------|  всередині вже наявного режиму SCRIPTS |
+|___________________|_____________________________________|________________________________________|
+| Складність -------| Вища — реалізується весь контракт --| Нижча — дві функції: `setup_ui()` і ---|
+|-------------------| `HexModuleBase` --------------------| `update()` ----------------------------|
+|___________________|_____________________________________|________________________________________|
+| Потребує зміни ---| Ні (авторєстрація) -----------------| Ні (файл кладеться в будь-яку папку, --|
+| коду ядра --------|-------------------------------------| обирається користувачем у застосунку) -|
+|___________________|_____________________________________|________________________________________|
+| Розповсюдження ---| Файл копіюється у `modules/` при ---| Файл підвантажується користувачем -----|
+|-------------------| встановленні застосунку ------------| "на льоту", без перевстановлення ------|
+|___________________|_____________________________________|________________________________________|
+| Документація -----| [MODULES_DEV_GUIDE.md] -------------| [SCRIPTS_DEV_GUIDE.md] ----------------|
+|___________________|_____________________________________|________________________________________|
+
+## Конфігурація
+
+Все зберігається в `hexmc_config.json` поруч із `main.pyw` (створюється автоматично при першому запуску). Ядро не інтерпретує вміст `CONF["modules"][<key>]` — кожен модуль читає/пише лише свою гілку через `get_state()`/`set_state()`, тож додавання нового модуля ніколи не вимагає правок формату конфігу.
+
+Помилки на етапі завантаження конфігу (коли вікна для логів ще немає — `.pyw` без консолі) пишуться в `hexmc_error.log`.
+
+## Відомі обмеження
+
+- `pystray` може не працювати на деяких Linux-збірках без AppIndicator/GTK — застосунок деградує без трею, а не падає.
+- Формат `profiles` (6 слотів пресетів SCREEN) версіонується (`profiles_format`) — при зміні формату старі пресети одноразово скидаються при міграції конфігу.
+- SCRIPTS-режим виконує довільний Python-код користувача без пісочниці — див. попередження безпеки в [SCRIPTS_DEV_GUIDE.md](SCRIPTS_DEV_GUIDE.md).
+
+## Ліцензія
+
+GNU General Public License v3.0 (GPLv3) — див. [LICENSE](LICENSE).
+
+Copyright (C) 2026 Artem Honcharov (Hon4) / OWN.LAB
+
