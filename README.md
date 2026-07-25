@@ -45,7 +45,9 @@
 
 ## Скріншоти
 
-_(додайте сюди 2–3 скріншоти інтерфейсу: головне вікно, SCREEN-режим, SETTINGS)_
+<img width="700" height="500" alt="Screenshot 2026-07-25 190525" src="https://github.com/user-attachments/assets/98268b94-30f8-4181-84d8-1f0c9fdb3c8d" />
+<img width="700" height="500" alt="Screenshot 2026-07-25 190729" src="https://github.com/user-attachments/assets/0a13705c-e35a-4de6-a0c5-de30492f5074" />
+<img width="700" height="500" alt="Screenshot 2026-07-25 190959" src="https://github.com/user-attachments/assets/132c3514-af3a-42f4-a7b3-cfc822efba87" />
 
 ## Встановлення
 
