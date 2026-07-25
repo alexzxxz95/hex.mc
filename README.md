@@ -1,5 +1,3 @@
-# ⬡ OWN.LAB / Hexel ONE / HEX.MC
-
 # HEX_MC
 
 Десктопний застосунок керування гексагональною NeoPixel-матрицею (77 світлодіодів, "Hexel") через ESP32-C3 по USB-serial.
@@ -180,4 +178,3 @@ hex_mc/
 GNU General Public License v3.0 (GPLv3) — див. [LICENSE](LICENSE).
 
 Copyright (C) 2026 Artem Honcharov (Hon4) / OWN.LAB
-
